@@ -1,39 +1,42 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="transition-colors duration-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulasi Sandi A-Z (Atbash Cipher) - Pramuka & Kriptografi</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Inter Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Early Theme Detection script to prevent Flash of Unstyled Theme -->
+  <script>
+    (function() {
+      const storedTheme = localStorage.getItem('sandi_az_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
 
+  <!-- Tailwind CSS CDN with dark mode selector strategy -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            pramuka: {
-              50: '#fbf8f2',
-              100: '#f5edd9',
-              500: '#995c23',
-              600: '#7e4718',
-              800: '#542f11',
-            },
-            forest: {
-              500: '#059669',
-              600: '#047857',
-              700: '#065f46',
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
             }
           }
         }
@@ -41,276 +44,313 @@
     }
   </script>
 
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    /* Custom glow and transition effects */
-    .pair-card {
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Smooth card interaction and active state transitions */
+    .pair-pill {
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .pair-card:hover, .pair-card.active-key {
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.3);
+    .pair-pill:hover {
+      transform: translateY(-2px);
     }
-    .pulse-glow {
-      animation: pulseAnim 1.4s infinite alternate;
+    
+    /* Active highlight in light mode */
+    html:not(.dark) .pair-pill.active-pair {
+      background-color: #eef2ff !important;
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25), 0 4px 12px -2px rgba(99, 102, 241, 0.15);
+      transform: translateY(-2px);
     }
-    @keyframes pulseAnim {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-      100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+
+    /* Active highlight in dark mode */
+    html.dark .pair-pill.active-pair {
+      background-color: rgba(99, 102, 241, 0.18) !important;
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35), 0 4px 14px -2px rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
     }
-    /* Custom scrollbar */
+
+    /* Subtle custom scrollbar */
     ::-webkit-scrollbar {
       height: 6px;
       width: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 4px;
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 4px;
+      border-radius: 9999px;
+    }
+    html.dark ::-webkit-scrollbar-thumb {
+      background: #334155;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+    html.dark ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-600 dark:selection:text-indigo-300 antialiased transition-colors duration-200">
 
-  <!-- Toast Notification Container -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl border border-emerald-400">
-    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-    <span id="toast-message" class="text-sm font-semibold">Teks berhasil disalin!</span>
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2.5 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-xl backdrop-blur-md text-xs font-semibold border border-slate-800/10 dark:border-white/20">
+    <i data-lucide="check" class="w-4 h-4 text-emerald-400 dark:text-emerald-600"></i>
+    <span id="toast-message">Teks berhasil disalin!</span>
   </div>
 
-  <!-- Header Banner -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-emerald-900/50">
-          <i data-lucide="compass" class="w-6 h-6"></i>
+  <!-- Header Navbar -->
+  <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40 backdrop-blur-md transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-sm shadow-indigo-500/30 shrink-0">
+          <i data-lucide="compass" class="w-5 h-5"></i>
         </div>
         <div>
-          <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            Simulasi Sandi A-Z
-            <span class="text-xs bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/30 px-2 py-0.5 rounded-full">Atbash Cipher</span>
-          </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">Kriptografi Tradisional & Sandi Kepanduan Pramuka</p>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">Sandi A-Z</h1>
+            <span class="text-[10px] sm:text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">Atbash Cipher</span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">Simulasi & Laboratorium Kriptografi Kepanduan</p>
         </div>
       </div>
 
-      <!-- Action items in header -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Sound toggle -->
-        <button id="soundToggleBtn" onclick="toggleAudio()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-xs text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Toggle Efek Suara">
-          <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
-          <span class="hidden md:inline" id="soundStatusText">Suara: Aktif</span>
+      <!-- Controls & Toggle Buttons -->
+      <div class="flex items-center gap-2">
+        
+        <!-- Theme Toggle Button -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/70 transition shadow-xs" title="Ganti Mode Tampilan (Terang / Gelap)" aria-label="Ganti Tema">
+          <i id="themeIconSun" data-lucide="sun" class="w-4 h-4 text-amber-500 hidden dark:block"></i>
+          <i id="themeIconMoon" data-lucide="moon" class="w-4 h-4 text-slate-600 block dark:hidden"></i>
         </button>
 
-        <!-- Mode Tab Selector (Konverter vs Kuis) -->
-        <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
-          <button id="tabConvertBtn" onclick="switchView('converter')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm">
+        <!-- Sound Toggle -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="flex items-center gap-1.5 px-2.5 py-1.5 sm:h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/70 text-xs font-medium transition shadow-xs" title="Suara Efek">
+          <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+          <span class="hidden md:inline" id="soundStatusText">Suara</span>
+        </button>
+
+        <!-- Mode Segmented Control -->
+        <div class="flex bg-slate-100 dark:bg-slate-800/90 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+          <button id="tabConvertBtn" onclick="switchView('converter')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs transition flex items-center gap-1.5">
             <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i>
             <span>Konverter</span>
           </button>
-          <button id="tabQuizBtn" onclick="switchView('quiz')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition flex items-center gap-1.5">
+          <button id="tabQuizBtn" onclick="switchView('quiz')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
             <i data-lucide="award" class="w-3.5 h-3.5"></i>
-            <span>Tantangan Kuis</span>
+            <span>Kuis</span>
           </button>
         </div>
+
       </div>
+
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-5 sm:space-y-6">
 
-    <!-- Information Card / Explanation Banner -->
-    <div class="bg-gradient-to-r from-slate-800/90 via-slate-800/60 to-emerald-950/40 border border-slate-700/80 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-        <div class="space-y-1">
-          <h2 class="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-            <i data-lucide="book-open" class="w-4 h-4"></i> Konsep Dasar Sandi A-Z
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
-            Sandi A-Z memasangkan huruf alfabet dari depan ke belakang: <span class="font-mono text-emerald-300 font-bold">A</span> berpasangan dengan <span class="font-mono text-amber-300 font-bold">Z</span>, <span class="font-mono text-emerald-300 font-bold">B</span> dengan <span class="font-mono text-amber-300 font-bold">Y</span>, hingga <span class="font-mono text-emerald-300 font-bold">M</span> dengan <span class="font-mono text-amber-300 font-bold">N</span>. Karena sifatnya simetris (involusioner), cara membaca dan menguncinya memakai rumus yang identik!
-          </p>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <button onclick="fillSampleText('PRAJA MUDA KARANA')" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition">
-            "PRAJA MUDA KARANA"
-          </button>
-          <button onclick="fillSampleText('TUNAS KELAPA')" class="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition">
-            "TUNAS KELAPA"
-          </button>
-        </div>
+    <!-- Concept Explanation & Quick Samples -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200">
+      <div class="space-y-1">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5"></i> Panduan Sandi A-Z
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+          Sandi A-Z membalik urutan 26 huruf alfabet: huruf pertama dipasangkan dengan huruf terakhir (<span class="font-mono font-semibold text-slate-900 dark:text-white">A ↔ Z</span>, <span class="font-mono font-semibold text-slate-900 dark:text-white">B ↔ Y</span>, hingga <span class="font-mono font-semibold text-slate-900 dark:text-white">M ↔ N</span>). Karena bersifat simetris, fungsi enkripsi dan dekripsinya identik!
+        </p>
+      </div>
+      
+      <!-- Scout Term Quick Buttons -->
+      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+        <span class="text-xs text-slate-400 dark:text-slate-500 mr-1 hidden sm:inline">Contoh:</span>
+        <button onclick="fillSampleText('PRAJA MUDA KARANA')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/70 transition font-medium">
+          "PRAJA MUDA KARANA"
+        </button>
+        <button onclick="fillSampleText('DASADARMA')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/70 transition font-medium">
+          "DASADARMA"
+        </button>
+        <button onclick="fillSampleText('TUNAS KELAPA')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/70 transition font-medium">
+          "TUNAS KELAPA"
+        </button>
+        <button onclick="fillSampleText('SATYAKU KUDARMAKAN')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/70 transition font-medium">
+          "SATYAKU KUDARMAKAN"
+        </button>
       </div>
     </div>
 
-    <!-- Interactive Reference Table (Visual Map) -->
-    <section class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur">
+    <!-- Interactive Pair Reference Grid -->
+    <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors duration-200">
       <div class="flex items-center justify-between mb-3">
-        <div>
-          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <i data-lucide="key-round" class="w-4 h-4 text-emerald-400"></i>
-            Peta Transformasi Pasangan Sandi A-Z
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">Klik atau ketik huruf untuk melihat pasangan yang menyala secara serentak.</p>
+        <div class="flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Peta Pasangan Alfabet Sandi A-Z</h3>
         </div>
-        <div class="text-xs text-slate-400 font-mono hidden sm:block bg-slate-900/60 px-2.5 py-1 rounded-md border border-slate-700">
-          13 Pasangan Kunci
-        </div>
+        <span class="text-[11px] text-slate-400 dark:text-slate-500">Klik kartu untuk menyisipkan huruf</span>
       </div>
 
-      <!-- Alphabet Matrix (13 Pairs) -->
-      <div class="overflow-x-auto pb-2 pt-1">
+      <!-- 13 Pairs Horizontal Strip -->
+      <div class="overflow-x-auto pb-1.5 pt-0.5">
         <div id="pairMatrix" class="grid grid-flow-col auto-cols-[minmax(54px,1fr)] sm:auto-cols-fr gap-2 text-center min-w-[720px] sm:min-w-0">
-          <!-- Populated dynamically via JavaScript -->
+          <!-- Populated by JS -->
         </div>
       </div>
     </section>
 
-    <!-- VIEW 1: CONVERTER VIEW -->
+    <!-- VIEW 1: DUAL CONVERTER -->
     <div id="converterView" class="space-y-6">
       
-      <!-- Dual Editor Panes -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Dual Textarea Box -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         
-        <!-- Plaintext Box (Teks Asli) -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl flex flex-col shadow-xl overflow-hidden focus-within:border-emerald-500 transition-all">
-          <div class="px-5 py-3.5 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <h2 class="font-bold text-sm text-slate-200">Teks Biasa (Plaintext)</h2>
+        <!-- Plaintext Editor (Left) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col shadow-xs focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 dark:focus-within:ring-indigo-500/20 transition-all overflow-hidden">
+          <div class="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+              <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">Teks Asli (Plaintext)</h4>
             </div>
             <div class="flex items-center gap-1">
-              <button onclick="copyToClipboard('plainText', 'Teks biasa')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition" title="Salin Teks Biasa">
-                <i data-lucide="copy" class="w-4 h-4"></i>
+              <button onclick="toggleCase('plainText')" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-md transition" title="Ubah Huruf Besar/Kecil">
+                <i data-lucide="case-sensitive" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="clearAll()" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-700 transition" title="Hapus Semua">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <button onclick="copyToClipboard('plainText', 'Teks asli')" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-md transition" title="Salin Teks">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="clearAll()" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition" title="Hapus Semua">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
           </div>
-          <div class="p-4 flex-1 flex flex-col">
-            <textarea id="plainText" rows="6" placeholder="Ketik teks yang ingin diubah menjadi sandi A-Z di sini... Contoh: SIAP SEDIA" 
-              class="w-full flex-1 bg-transparent text-slate-100 placeholder-slate-500 resize-none outline-none font-mono text-base sm:text-lg tracking-wide leading-relaxed"
+          <div class="p-4 flex-1">
+            <textarea id="plainText" rows="6" placeholder="Ketik teks biasa di sini untuk dikonversi menjadi sandi A-Z..." 
+              class="w-full h-full bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-none outline-none font-mono text-base leading-relaxed"
               oninput="handleInput('plain')"></textarea>
           </div>
-          <div class="px-5 py-2.5 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <div>
-              <span id="plainCharCount">0</span> Karakter | <span id="plainWordCount">0</span> Kata
-            </div>
-            <div class="text-emerald-400 text-[11px] uppercase font-semibold">Input / Edit Langsung</div>
+          <div class="px-4 py-2 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+            <div><span id="plainCharCount">0</span> Karakter | <span id="plainWordCount">0</span> Kata</div>
+            <div class="text-indigo-600 dark:text-indigo-400 font-medium font-sans">Input Langsung</div>
           </div>
         </div>
 
-        <!-- Ciphertext Box (Sandi A-Z) -->
-        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl flex flex-col shadow-xl overflow-hidden focus-within:border-amber-500 transition-all">
-          <div class="px-5 py-3.5 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-              <h2 class="font-bold text-sm text-slate-200">Sandi A-Z (Ciphertext)</h2>
+        <!-- Ciphertext Editor (Right) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col shadow-xs focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 dark:focus-within:ring-indigo-500/20 transition-all overflow-hidden">
+          <div class="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">Sandi A-Z (Ciphertext)</h4>
             </div>
             <div class="flex items-center gap-1">
-              <button onclick="copyToClipboard('cipherText', 'Sandi A-Z')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition" title="Salin Sandi A-Z">
-                <i data-lucide="copy" class="w-4 h-4"></i>
+              <button onclick="toggleCase('cipherText')" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-md transition" title="Ubah Huruf Besar/Kecil">
+                <i data-lucide="case-sensitive" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="clearAll()" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-700 transition" title="Hapus Semua">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <button onclick="copyToClipboard('cipherText', 'Sandi A-Z')" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-md transition" title="Salin Sandi">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="clearAll()" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition" title="Hapus Semua">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
           </div>
-          <div class="p-4 flex-1 flex flex-col">
+          <div class="p-4 flex-1">
             <textarea id="cipherText" rows="6" placeholder="Atau ketik sandi A-Z di sini untuk langsung diterjemahkan kembali..." 
-              class="w-full flex-1 bg-transparent text-amber-300 placeholder-slate-500 resize-none outline-none font-mono text-base sm:text-lg tracking-wide leading-relaxed"
+              class="w-full h-full bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-none outline-none font-mono text-base leading-relaxed"
               oninput="handleInput('cipher')"></textarea>
           </div>
-          <div class="px-5 py-2.5 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <div>
-              <span id="cipherCharCount">0</span> Karakter | <span id="cipherWordCount">0</span> Kata
-            </div>
-            <div class="text-amber-400 text-[11px] uppercase font-semibold">Simetris / Dua Arah</div>
+          <div class="px-4 py-2 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+            <div><span id="cipherCharCount">0</span> Karakter | <span id="cipherWordCount">0</span> Kata</div>
+            <div class="text-amber-600 dark:text-amber-400 font-medium font-sans">Dua Arah (Bidirectional)</div>
           </div>
         </div>
 
       </div>
 
-      <!-- Step-by-Step Inspector Breakdown -->
-      <section class="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+      <!-- Character-by-Character Breakdown Inspector -->
+      <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors duration-200">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <i data-lucide="split" class="w-4 h-4 text-emerald-400"></i>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Inspeksi Transformasi Karakter per Karakter</h3>
+            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Inspeksi Transformasi Karakter Real-Time</h3>
           </div>
-          <span class="text-xs text-slate-400">Analisis visual huruf</span>
+          <span class="text-[11px] text-slate-400 dark:text-slate-500">Visualisasi mapping per karakter</span>
         </div>
         
-        <div id="breakdownContainer" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 min-h-[70px] items-center">
-          <p class="text-xs text-slate-500 italic">Mulai ketik teks di atas untuk melihat dekonstruksi pasangan huruf di sini.</p>
+        <div id="breakdownContainer" class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800 min-h-[64px] items-center">
+          <p class="text-xs text-slate-400 dark:text-slate-500 italic">Ketik teks pada salah satu kolom di atas untuk melihat visualisasi dekonstruksi tiap huruf.</p>
         </div>
       </section>
 
     </div>
 
-    <!-- VIEW 2: QUIZ / CHALLENGE VIEW -->
+    <!-- VIEW 2: QUIZ / CHALLENGE -->
     <div id="quizView" class="hidden space-y-6">
-      <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xs transition-colors duration-200">
         
         <!-- Scoreboard Header -->
-        <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-700">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Uji Kemampuan Kriptografi</span>
-            <h2 class="text-xl font-bold text-white mt-0.5">Tebak Sandi A-Z Pramuka</h2>
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Latihan Mandiri Kepanduan</span>
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5">Tebak Sandi A-Z Pramuka</h2>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
-              <i data-lucide="flame" class="w-5 h-5 text-amber-500"></i>
-              <span class="text-xs text-slate-400">Streak:</span>
-              <span id="quizStreak" class="font-mono font-bold text-amber-400 text-lg">0</span>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+              <i data-lucide="flame" class="w-4 h-4 text-amber-500"></i>
+              <span class="text-slate-500 dark:text-slate-400">Streak:</span>
+              <span id="quizStreak" class="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">0</span>
             </div>
-            <div class="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
-              <i data-lucide="trophy" class="w-5 h-5 text-emerald-400"></i>
-              <span class="text-xs text-slate-400">Skor:</span>
-              <span id="quizScore" class="font-mono font-bold text-emerald-400 text-lg">0</span>
+            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+              <i data-lucide="trophy" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+              <span class="text-slate-500 dark:text-slate-400">Skor:</span>
+              <span id="quizScore" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">0</span>
             </div>
           </div>
         </div>
 
-        <!-- Question Card -->
-        <div class="py-8 max-w-2xl mx-auto text-center space-y-6">
+        <!-- Question Prompt Area -->
+        <div class="py-6 max-w-xl mx-auto text-center space-y-5">
           <div class="space-y-2">
-            <div class="text-xs uppercase font-semibold text-slate-400 tracking-wider">Terjemahkan Sandi Berikut Menjadi Teks Biasa:</div>
-            <div id="quizCipherPrompt" class="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-amber-400 tracking-widest bg-slate-950/70 border border-slate-800 py-6 px-4 rounded-2xl shadow-inner break-words">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Pecahkan kata sandi A-Z berikut menjadi teks asli:</p>
+            <div id="quizCipherPrompt" class="text-3xl sm:text-4xl font-mono font-bold text-slate-900 dark:text-white tracking-widest bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 py-5 px-4 rounded-xl shadow-inner select-all">
               KIZKZ
             </div>
-            <div id="quizClueBox" class="text-xs text-slate-400 hidden italic">
-              Petunjuk Kategori: <span id="quizCategoryName" class="text-emerald-300 font-semibold">Istilah Kepramukaan</span>
+            <div id="quizClueBox" class="text-xs text-slate-500 dark:text-slate-400 hidden pt-1">
+              Petunjuk Kategori: <span id="quizCategoryName" class="text-indigo-600 dark:text-indigo-400 font-semibold font-sans">Istilah Pramuka</span>
             </div>
           </div>
 
-          <!-- Answer Input Form -->
-          <div class="space-y-4">
-            <div class="flex gap-2 max-w-md mx-auto">
+          <!-- Answer Input -->
+          <div class="space-y-3">
+            <div class="flex gap-2 max-w-sm mx-auto">
               <input id="quizAnswerInput" type="text" placeholder="Ketik jawabanmu..." autocomplete="off"
-                class="flex-1 bg-slate-900 text-center uppercase tracking-widest font-mono text-lg font-bold border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                class="flex-1 bg-white dark:bg-slate-800 text-center uppercase tracking-widest font-mono text-base font-bold border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 onkeydown="if(event.key === 'Enter') checkQuizAnswer()">
-              <button onclick="checkQuizAnswer()" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/40 transition flex items-center gap-1.5">
+              <button onclick="checkQuizAnswer()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm shadow-indigo-500/20">
                 <span>Cek</span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
-            <!-- Quiz Feedback Message -->
-            <div id="quizFeedback" class="text-sm font-semibold min-h-[24px]"></div>
+            <!-- Feedback Message -->
+            <div id="quizFeedback" class="text-xs font-semibold min-h-[20px]"></div>
 
-            <!-- Action buttons: Hint & Next -->
-            <div class="flex items-center justify-center gap-3 pt-2">
-              <button onclick="toggleHint()" class="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-700/60 transition flex items-center gap-1">
-                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-400"></i>
-                <span id="hintBtnText">Tampilkan Petunjuk</span>
+            <!-- Hint & Skip Controls -->
+            <div class="flex items-center justify-center gap-2 pt-2">
+              <button onclick="toggleHint()" class="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1">
+                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span id="hintBtnText">Petunjuk</span>
               </button>
-              <button onclick="nextQuizQuestion()" class="text-xs text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/10 transition flex items-center gap-1">
+              <button onclick="nextQuizQuestion()" class="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                 <span>Ganti Soal</span>
               </button>
@@ -323,46 +363,42 @@
 
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800 bg-slate-900 py-6 text-center text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+  <!-- Minimalist Footer -->
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-5 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
       <div class="flex items-center gap-2">
-        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-        <span>Aplikasi Pembelajaran Sandi A-Z &bull; Pramuka Indonesia</span>
+        <span class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
+        <span class="font-medium text-slate-700 dark:text-slate-300">Simulasi Sandi A-Z Pramuka</span>
+        <span class="text-slate-400 dark:text-slate-600">&bull; Rumus ASCII: <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px] font-mono text-slate-700 dark:text-slate-300">155 - kodeChar</code></span>
       </div>
-      <p>Sandi A-Z berbasis algoritma reflektif Atbash Cipher &copy; 2026</p>
+      <p class="text-[11px] text-slate-400 dark:text-slate-500">Atbash Cipher Simulator &bull; Single-File Web App &bull; GitHub Pages Ready</p>
     </div>
   </footer>
 
-  <!-- Web Application Logic -->
+  <!-- Application Logic -->
   <script>
-    // --- 1. DATA AND PAIRS INITIALIZATION ---
-    // Atbash pairs (13 pairs)
+    // 1. DATA & PAIRS
     const PAIRS = [
       ['A', 'Z'], ['B', 'Y'], ['C', 'X'], ['D', 'W'], ['E', 'V'], ['F', 'U'], ['G', 'T'],
       ['H', 'S'], ['I', 'R'], ['J', 'Q'], ['K', 'P'], ['L', 'O'], ['M', 'N']
     ];
 
-    // Quiz Questions Data Bank (Scout, Nature, Values)
     const QUIZ_BANK = [
-      { plain: "PRAMUKA", category: "Gerakan Kepanduan" },
-      { plain: "TUNAS", category: "Lambang Pramuka" },
-      { plain: "SIAGA", category: "Tingkatan Pramuka" },
-      { plain: "PENGGALANG", category: "Tingkatan Pramuka" },
-      { plain: "PENEGAK", category: "Tingkatan Pramuka" },
-      { plain: "PANDEGA", category: "Tingkatan Pramuka" },
-      { plain: "SEMAPHORE", category: "Keterampilan Komunikasi" },
-      { plain: "KOMPAS", category: "Alat Navigasi Darat" },
-      { plain: "TENDA", category: "Perlengkapan Berkemah" },
-      { plain: "API UNGGUN", category: "Kegiatan Malam Kemah" },
-      { plain: "DASA DARMA", category: "Kode Kehormatan" },
-      { plain: "TRI SATYA", category: "Janji Pramuka" },
-      { plain: "PIONERING", category: "Keterampilan Tali Temali" },
-      { plain: "BANTARA", category: "Tingkatan Penegak" },
-      { plain: "DIRGANTARA", category: "Satuan Karya (SAKA)" },
-      { plain: "BAHARI", category: "Satuan Karya (SAKA)" },
-      { plain: "WANABAKTI", category: "Satuan Karya (SAKA)" },
-      { plain: "BHAYANGKARA", category: "Satuan Karya (SAKA)" }
+      { plain: "PRAJA MUDA KARANA", category: "Arti Pramuka" },
+      { plain: "DASADARMA", category: "Sepuluh Janji Pramuka" },
+      { plain: "TRISATYA", category: "Tiga Janji Utama" },
+      { plain: "TUNAS KELAPA", category: "Lambang Gerakan Pramuka" },
+      { plain: "SEMAPHORE", category: "Komunikasi Bendera" },
+      { plain: "MORSE", category: "Komunikasi Titik dan Garis" },
+      { plain: "KOMPAS", category: "Penunjuk Arah Mata Angin" },
+      { plain: "PIONERING", category: "Keterampilan Tali Temali & Bangunan" },
+      { plain: "JAMBORE", category: "Pertemuan Besar Pramuka Penggalang" },
+      { plain: "BIVAK", category: "Tempat Berlindung Darurat" },
+      { plain: "SIAGA", category: "Golongan Usia 7 - 10 Tahun" },
+      { plain: "PENGGALANG", category: "Golongan Usia 11 - 15 Tahun" },
+      { plain: "PENEGAK", category: "Golongan Usia 16 - 20 Tahun" },
+      { plain: "PANDEGA", category: "Golongan Usia 21 - 25 Tahun" },
+      { plain: "TENDA", category: "Perlengkapan Perkemahan" }
     ];
 
     let isAudioEnabled = true;
@@ -370,9 +406,25 @@
     let currentQuizIndex = 0;
     let quizScore = 0;
     let quizStreak = 0;
-    let currentActiveLetters = new Set();
 
-    // --- 2. AUDIO SYNTHESIS (Zero External Audio Files) ---
+    // 2. THEME SWITCHER (Light / Dark Mode with Persistence)
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('sandi_az_theme', 'light');
+        showToast('Mode Terang Aktif');
+        playTone(600, 0.04);
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('sandi_az_theme', 'dark');
+        showToast('Mode Gelap Aktif');
+        playTone(400, 0.04);
+      }
+      lucide.createIcons();
+    }
+
+    // 3. WEB AUDIO API SYNTHESIS
     function initAudio() {
       if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -385,7 +437,7 @@
       }
     }
 
-    function playTone(freq = 440, duration = 0.08, type = 'sine', gainVal = 0.08) {
+    function playTone(freq = 520, duration = 0.05, type = 'sine', gainVal = 0.035) {
       if (!isAudioEnabled) return;
       try {
         initAudio();
@@ -400,20 +452,18 @@
         gainNode.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {
-        // Silently catch audio restrictions
-      }
+      } catch (e) {}
     }
 
     function playSoundSuccess() {
-      playTone(523.25, 0.1, 'triangle', 0.1);
-      setTimeout(() => playTone(659.25, 0.1, 'triangle', 0.1), 100);
-      setTimeout(() => playTone(783.99, 0.2, 'triangle', 0.12), 200);
+      playTone(523.25, 0.08, 'sine', 0.05);
+      setTimeout(() => playTone(659.25, 0.08, 'sine', 0.05), 80);
+      setTimeout(() => playTone(783.99, 0.12, 'sine', 0.06), 160);
     }
 
     function playSoundWrong() {
-      playTone(220, 0.15, 'sawtooth', 0.1);
-      setTimeout(() => playTone(180, 0.25, 'sawtooth', 0.1), 120);
+      playTone(250, 0.1, 'triangle', 0.05);
+      setTimeout(() => playTone(190, 0.15, 'triangle', 0.05), 90);
     }
 
     function toggleAudio() {
@@ -422,63 +472,58 @@
       const text = document.getElementById('soundStatusText');
       if (isAudioEnabled) {
         icon.setAttribute('data-lucide', 'volume-2');
-        icon.classList.remove('text-slate-500');
-        icon.classList.add('text-emerald-400');
-        text.innerText = "Suara: Aktif";
-        playTone(600, 0.05);
+        icon.className = 'w-4 h-4 text-indigo-600 dark:text-indigo-400';
+        text.innerText = "Suara";
+        playTone(600, 0.04);
       } else {
         icon.setAttribute('data-lucide', 'volume-x');
-        icon.classList.remove('text-emerald-400');
-        icon.classList.add('text-slate-500');
-        text.innerText = "Suara: Hening";
+        icon.className = 'w-4 h-4 text-slate-400 dark:text-slate-600';
+        text.innerText = "Hening";
       }
       lucide.createIcons();
     }
 
-    // --- 3. ATBASH CIPHER CORE LOGIC ---
-    // Pure reflective function: convertSandiAZ(input)
+    // 4. ATBASH CIPHER ALGORITHM
     function convertSandiAZ(str) {
       return str.split('').map(char => {
         const code = char.charCodeAt(0);
-        // Uppercase A-Z (ASCII 65 - 90) -> (65 + 90) = 155
+        // Huruf Kapital A-Z (ASCII 65 - 90) -> (65 + 90 = 155)
         if (code >= 65 && code <= 90) {
           return String.fromCharCode(155 - code);
         }
-        // Lowercase a-z (ASCII 97 - 122) -> (97 + 122) = 219
+        // Huruf Kecil a-z (ASCII 97 - 122) -> (97 + 122 = 219)
         if (code >= 97 && code <= 122) {
           return String.fromCharCode(219 - code);
         }
-        // Non-alphabet characters remain untouched
         return char;
       }).join('');
     }
 
-    // --- 4. RENDER VISUAL REFERENCE MATRIX ---
+    // 5. MATRIX CARDS INITIALIZATION & HIGHLIGHTING
     function renderMatrix() {
       const matrixEl = document.getElementById('pairMatrix');
       matrixEl.innerHTML = '';
 
       PAIRS.forEach(([top, bottom], idx) => {
         const card = document.createElement('div');
-        card.className = `pair-card bg-slate-900/90 border border-slate-700/80 rounded-xl p-2 cursor-pointer flex flex-col items-center justify-between select-none hover:border-emerald-400 hover:bg-slate-800/80`;
+        card.className = `pair-pill bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 cursor-pointer flex flex-col items-center justify-between select-none shadow-xs transition`;
         card.id = `pair-node-${top}`;
         card.setAttribute('data-top', top);
         card.setAttribute('data-bottom', bottom);
 
         card.innerHTML = `
-          <div class="text-sm sm:text-base font-bold font-mono text-emerald-400 pair-top">${top}</div>
-          <div class="my-0.5 text-[10px] text-slate-500 flex items-center justify-center">
+          <div class="text-sm font-bold font-mono text-indigo-600 dark:text-indigo-400">${top}</div>
+          <div class="my-0.5 text-[9px] text-slate-400 dark:text-slate-500 flex items-center justify-center">
             <i data-lucide="arrow-up-down" class="w-2.5 h-2.5"></i>
           </div>
-          <div class="text-sm sm:text-base font-bold font-mono text-amber-400 pair-bottom">${bottom}</div>
+          <div class="text-sm font-bold font-mono text-amber-600 dark:text-amber-400">${bottom}</div>
         `;
 
-        // Click on pair to insert into plain text
         card.onclick = () => {
           const plainInput = document.getElementById('plainText');
           plainInput.value += top;
           handleInput('plain');
-          playTone(350 + (idx * 30), 0.05);
+          playTone(400 + (idx * 25), 0.04);
         };
 
         matrixEl.appendChild(card);
@@ -487,7 +532,6 @@
       lucide.createIcons();
     }
 
-    // Highlight letter pairs in real-time
     function highlightMatrixKeys(text) {
       const upper = text.toUpperCase();
       const charsInText = new Set(upper.replace(/[^A-Z]/g, '').split(''));
@@ -495,31 +539,26 @@
       PAIRS.forEach(([top, bottom]) => {
         const card = document.getElementById(`pair-node-${top}`);
         if (!card) return;
-        
         const isPresent = charsInText.has(top) || charsInText.has(bottom);
         if (isPresent) {
-          card.classList.add('active-key', 'bg-emerald-950/60', 'border-emerald-400', 'ring-2', 'ring-emerald-400/40');
-          card.classList.remove('bg-slate-900/90', 'border-slate-700/80');
+          card.classList.add('active-pair');
         } else {
-          card.classList.remove('active-key', 'bg-emerald-950/60', 'border-emerald-400', 'ring-2', 'ring-emerald-400/40');
-          card.classList.add('bg-slate-900/90', 'border-slate-700/80');
+          card.classList.remove('active-pair');
         }
       });
     }
 
-    // --- 5. REAL-TIME BIDIRECTIONAL CONVERTER ---
+    // 6. BIDIRECTIONAL REAL-TIME CONVERTER
     function handleInput(source) {
       const plainEl = document.getElementById('plainText');
       const cipherEl = document.getElementById('cipherText');
 
       if (source === 'plain') {
-        const val = plainEl.value;
-        cipherEl.value = convertSandiAZ(val);
-        playTone(500, 0.03, 'sine', 0.03);
+        cipherEl.value = convertSandiAZ(plainEl.value);
+        playTone(560, 0.015, 'sine', 0.02);
       } else {
-        const val = cipherEl.value;
-        plainEl.value = convertSandiAZ(val);
-        playTone(450, 0.03, 'sine', 0.03);
+        plainEl.value = convertSandiAZ(cipherEl.value);
+        playTone(520, 0.015, 'sine', 0.02);
       }
 
       updateCounts();
@@ -541,12 +580,12 @@
     function renderBreakdown(plain, cipher) {
       const container = document.getElementById('breakdownContainer');
       if (!plain || plain.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic">Mulai ketik teks di atas untuk melihat dekonstruksi pasangan huruf di sini.</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 italic">Ketik teks pada salah satu kolom di atas untuk melihat visualisasi dekonstruksi tiap huruf.</p>`;
         return;
       }
 
       container.innerHTML = '';
-      const limit = Math.min(plain.length, 120); // Render up to 120 chars for smooth performance
+      const limit = Math.min(plain.length, 120);
 
       for (let i = 0; i < limit; i++) {
         const p = plain[i];
@@ -555,17 +594,17 @@
 
         const badge = document.createElement('div');
         if (isAlpha) {
-          badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 font-mono text-xs shadow-sm hover:border-emerald-400 transition";
+          badge.className = "flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs shadow-xs";
           badge.innerHTML = `
-            <span class="text-emerald-400 font-bold">${p}</span>
-            <i data-lucide="arrow-right" class="w-3 h-3 text-slate-500"></i>
-            <span class="text-amber-400 font-bold">${c}</span>
+            <span class="text-indigo-600 dark:text-indigo-400 font-bold">${p}</span>
+            <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400 dark:text-slate-500"></i>
+            <span class="text-amber-600 dark:text-amber-400 font-bold">${c}</span>
           `;
         } else if (p === ' ') {
-          badge.className = "px-2 py-1 rounded-lg bg-slate-900 border border-dashed border-slate-700 font-mono text-[11px] text-slate-500";
-          badge.innerHTML = `<span>[spasi]</span>`;
+          badge.className = "px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[10px] text-slate-400 dark:text-slate-500";
+          badge.innerHTML = `<span>spasi</span>`;
         } else {
-          badge.className = "flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800/50 border border-slate-800 font-mono text-xs text-slate-400";
+          badge.className = "flex items-center px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs text-slate-500 dark:text-slate-400";
           badge.innerHTML = `<span>${p}</span>`;
         }
         container.appendChild(badge);
@@ -573,47 +612,56 @@
 
       if (plain.length > limit) {
         const moreBadge = document.createElement('span');
-        moreBadge.className = "text-xs text-slate-500 self-center pl-2 font-mono";
-        moreBadge.innerText = `+${plain.length - limit} huruf lainnya...`;
+        moreBadge.className = "text-xs text-slate-400 dark:text-slate-500 pl-2 font-mono";
+        moreBadge.innerText = `+${plain.length - limit} karakter lainnya`;
         container.appendChild(moreBadge);
       }
 
       lucide.createIcons();
     }
 
+    function toggleCase(elementId) {
+      const textarea = document.getElementById(elementId);
+      if (!textarea || !textarea.value) return;
+      const val = textarea.value;
+      const isAllUpper = val === val.toUpperCase();
+      textarea.value = isAllUpper ? val.toLowerCase() : val.toUpperCase();
+      handleInput(elementId === 'plainText' ? 'plain' : 'cipher');
+      showToast('Kapitalisasi diubah');
+    }
+
     function fillSampleText(text) {
       const plainEl = document.getElementById('plainText');
       plainEl.value = text;
       handleInput('plain');
-      showToast(`Memuat contoh teks: "${text}"`);
+      showToast(`Memuat contoh: "${text}"`);
     }
 
     function clearAll() {
       document.getElementById('plainText').value = '';
       document.getElementById('cipherText').value = '';
       handleInput('plain');
-      showToast('Kolom telah dibersihkan');
+      showToast('Kolom dibersihkan');
     }
 
-    // Fallback-safe Clipboard copy using document.execCommand
     function copyToClipboard(elementId, label) {
       const textarea = document.getElementById(elementId);
       if (!textarea || !textarea.value) {
-        showToast(`Tidak ada teks untuk disalin`, true);
+        showToast('Tidak ada teks untuk disalin', true);
         return;
       }
       textarea.select();
       textarea.setSelectionRange(0, 99999);
       try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showToast(`${label} berhasil disalin ke clipboard!`);
-          playTone(700, 0.08);
+        const ok = document.execCommand('copy');
+        if (ok) {
+          showToast(`${label} berhasil disalin!`);
+          playTone(650, 0.05);
         } else {
-          showToast(`Gagal menyalin teks`, true);
+          showToast('Gagal menyalin teks', true);
         }
-      } catch (err) {
-        showToast(`Gagal menyalin teks`, true);
+      } catch (e) {
+        showToast('Gagal menyalin teks', true);
       }
       window.getSelection().removeAllRanges();
     }
@@ -623,22 +671,16 @@
       const text = document.getElementById('toast-message');
       text.innerText = message;
       
-      if (isError) {
-        toast.className = toast.className.replace('bg-emerald-600', 'bg-rose-600').replace('border-emerald-400', 'border-rose-400');
-      } else {
-        toast.className = toast.className.replace('bg-rose-600', 'bg-emerald-600').replace('border-rose-400', 'border-emerald-400');
-      }
-
-      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.remove('translate-y-16', 'opacity-0');
       toast.classList.add('translate-y-0', 'opacity-100');
 
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 2500);
+        toast.classList.add('translate-y-16', 'opacity-0');
+      }, 2200);
     }
 
-    // --- 6. QUIZ MODE LOGIC ---
+    // 7. QUIZ / CHALLENGE MODE
     function switchView(view) {
       const converterView = document.getElementById('converterView');
       const quizView = document.getElementById('quizView');
@@ -649,14 +691,14 @@
         converterView.classList.remove('hidden');
         quizView.classList.add('hidden');
 
-        tabConvertBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm";
-        tabQuizBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition flex items-center gap-1.5";
+        tabConvertBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs transition flex items-center gap-1.5";
+        tabQuizBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5";
       } else {
         converterView.classList.add('hidden');
         quizView.classList.remove('hidden');
 
-        tabQuizBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm";
-        tabConvertBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition flex items-center gap-1.5";
+        tabQuizBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs transition flex items-center gap-1.5";
+        tabConvertBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5";
         
         loadQuizQuestion();
       }
@@ -671,13 +713,12 @@
       document.getElementById('quizAnswerInput').value = '';
       document.getElementById('quizFeedback').innerHTML = '';
       document.getElementById('quizClueBox').classList.add('hidden');
-      document.getElementById('hintBtnText').innerText = 'Tampilkan Petunjuk';
+      document.getElementById('hintBtnText').innerText = 'Petunjuk';
 
-      // Automatically focus on input
       setTimeout(() => {
         const input = document.getElementById('quizAnswerInput');
         if (input) input.focus();
-      }, 100);
+      }, 50);
     }
 
     function checkQuizAnswer() {
@@ -688,7 +729,7 @@
       const correctAns = currentItem.plain.toUpperCase();
 
       if (!userAns) {
-        feedback.innerHTML = `<span class="text-amber-400">Silakan masukkan jawaban terlebih dahulu!</span>`;
+        feedback.innerHTML = `<span class="text-amber-600 dark:text-amber-400">Masukkan jawaban terlebih dahulu!</span>`;
         return;
       }
 
@@ -698,22 +739,21 @@
         document.getElementById('quizScore').innerText = quizScore;
         document.getElementById('quizStreak').innerText = quizStreak;
         
-        feedback.innerHTML = `<span class="text-emerald-400 flex items-center justify-center gap-1.5">
-          <i data-lucide="check" class="w-4 h-4"></i> Benar sekali! "${correctAns}" adalah jawaban tepat.
+        feedback.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i> Jawaban tepat: "${correctAns}" (+10)
         </span>`;
         lucide.createIcons();
         playSoundSuccess();
 
-        // Auto move to next after 1.5s
         setTimeout(() => {
           nextQuizQuestion();
-        }, 1500);
+        }, 1400);
 
       } else {
         quizStreak = 0;
         document.getElementById('quizStreak').innerText = quizStreak;
-        feedback.innerHTML = `<span class="text-rose-400 flex items-center justify-center gap-1.5">
-          <i data-lucide="x" class="w-4 h-4"></i> Kurang tepat, periksa kembali tabel pasangan di atas!
+        feedback.innerHTML = `<span class="text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i> Belum tepat, periksa kembali peta sandi di atas!
         </span>`;
         lucide.createIcons();
         playSoundWrong();
@@ -725,11 +765,11 @@
       const hintBtnText = document.getElementById('hintBtnText');
       if (clueBox.classList.contains('hidden')) {
         clueBox.classList.remove('hidden');
-        hintBtnText.innerText = 'Sembunyikan Petunjuk';
-        playTone(600, 0.05);
+        hintBtnText.innerText = 'Sembunyikan';
+        playTone(580, 0.04);
       } else {
         clueBox.classList.add('hidden');
-        hintBtnText.innerText = 'Tampilkan Petunjuk';
+        hintBtnText.innerText = 'Petunjuk';
       }
     }
 
@@ -743,7 +783,7 @@
       loadQuizQuestion();
     }
 
-    // --- 7. INITIALIZATION ON DOM READY ---
+    // 8. INITIALIZE APPLICATION
     window.addEventListener('DOMContentLoaded', () => {
       renderMatrix();
       fillSampleText('PRAJA MUDA KARANA');
